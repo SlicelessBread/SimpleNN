@@ -10,8 +10,9 @@ demonstrate how training actually works under the hood.
 
 ![SimpleNN training on the California Housing dataset](assets/screenshot-main.png)
 
-*The loss curve converges over 50 epochs of training; the log (right) shows the records
-loaded, the training time, the test RMSE in dollars, and a single prediction vs. the actual value.*
+*Two training runs overlaid for comparison (different epochs/neurons), each with its best loss in
+the legend; the log (right) shows the records loaded, the training time, the test RMSE in dollars,
+and a single prediction vs. the actual value.*
 
 ## Features
 
@@ -26,6 +27,9 @@ loaded, the training time, the test RMSE in dollars, and a single prediction vs.
   - **Run** trains the model and plots the loss curve (via [ScottPlot](https://scottplot.net/)).
   - **Test** evaluates the trained model on the held-out test set.
   - **Single** predicts one record and compares it to the real value.
+- **Save & compare runs**: every training run's loss curve is saved to `Results/`, keyed by its
+  hyperparameters (`run_{epochs}_{layers}_{neurons}.json`). Re-selecting those values overlays the
+  saved curve on the graph, so multiple runs can be compared side by side in different colors.
 
 ## Tech stack
 
@@ -53,7 +57,7 @@ cd SimpleNN
 dotnet run --project SimpleNN.csproj
 ```
 
-Then in the app: use the **Sfoglia…** (Browse) buttons to pick the CSV files (defaults point at
+Then in the app: use the **Browse…** buttons to pick the CSV files (defaults point at
 the bundled `Data/` files), set the hyperparameters, click **Run** to train, then **Test** to
 evaluate.
 
@@ -64,6 +68,7 @@ SimpleNN/
 ├── NeuralNetwork/      # Network, Layer, Neuron — the model and backprop
 ├── Trainer/            # LoadData (CSV + normalization), MainTrainer (training loop, RMSE)
 ├── Data/               # Sample California-housing CSVs
+├── Results/            # Saved run loss curves (run_{epochs}_{layers}_{neurons}.json)
 ├── Form1.cs            # WinForms UI: file selection, training, plotting, evaluation
 └── Program.cs          # Entry point
 ```

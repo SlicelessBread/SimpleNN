@@ -17,6 +17,13 @@ namespace SimpleNN
 
         private readonly ToolTip toolTip = new ToolTip();
 
+        // Curves currently drawn on the graph (by file name), so the same run isn't plotted twice
+        // and several runs can be overlaid to compare them. A new training Run resets the set.
+        private readonly HashSet<string> plottedRuns = new HashSet<string>();
+        private int colorIndex = 0;
+        private static readonly Color[] palette =
+            { Color.Red, Color.Green, Color.Blue, Color.Magenta, Color.DarkOrange, Color.Teal, Color.Brown };
+
         public Form1()
         {
             InitializeComponent();
@@ -124,8 +131,14 @@ namespace SimpleNN
                 lstLog.Items.Insert(0, string.Format("Training: {0} epochs in {1:F2}s",
                     trainer.epoche, DateTime.Now.Subtract(start).TotalSeconds));
 
-                // 4) Mostra la curva della loss. Per valutare sul test set premere "Test".
-                updateplot(trainer.lossLogs.Count);
+                // 4) Show the loss curve (a new Run resets the graph). Press "Test" to evaluate.
+                double[] losses = trainer.lossLogs.ToArray();
+                ResetPlot();
+                AddCurve(losses, RunLabel(numbxEpox.Value, numbxLayers.Value, numbxNeurons.Value, losses));
+                plottedRuns.Add(Path.GetFileName(RunFileName()));
+
+                // 5) Save this run's loss curve so it can be recalled/compared later.
+                saveRun();
             }
             catch (Exception ex)
             {
@@ -137,18 +150,45 @@ namespace SimpleNN
             }
         }
 
+        // Folder where training runs are saved/recalled. Uses the configured folder when it is
+        // usable on this machine, otherwise falls back to a "Results" folder next to the app.
+        private static string ResultsDir()
+        {
+            string configured = Properties.Settings.Default.ResultsFolder;
+            string dir = configured;
+            try
+            {
+                string? parent = Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(configured));
+                if (string.IsNullOrWhiteSpace(configured) || parent == null || !Directory.Exists(parent))
+                    dir = Path.Combine(AppContext.BaseDirectory, "Results");
+            }
+            catch
+            {
+                dir = Path.Combine(AppContext.BaseDirectory, "Results");
+            }
+            Directory.CreateDirectory(dir);
+            return dir;
+        }
+
+        // File name encodes the hyperparameters, so a run can be recalled by re-selecting them.
+        private string RunFileName()
+        {
+            string name = string.Format("run_{0}_{1}_{2}.json", numbxEpox.Value, numbxLayers.Value, numbxNeurons.Value);
+            return Path.Combine(ResultsDir(), name);
+        }
+
         private void saveRun()
         {
-            string fileName = string.Format("run_{0}_{1}_{2}.json", numbxEpox.Value, numbxLayers.Value, numbxNeurons.Value);
+            string fileName = RunFileName();
             string json = JsonConvert.SerializeObject(new { trainer.lossLogs });
             try
             {
-                fileName = Path.Combine(Properties.Settings.Default.ResultsFolder, fileName);
                 if (File.Exists(fileName))
                 {
                     File.Delete(fileName);
                 }
                 File.WriteAllText(fileName, json);
+                lstLog.Items.Insert(0, "Run saved: " + Path.GetFileName(fileName));
             }
             catch (Exception e)
             {
@@ -156,29 +196,37 @@ namespace SimpleNN
             }
         }
 
-        private void updateplot(int currEpox)
+        // Clears the graph and the set of drawn curves, ready for a fresh comparison.
+        private void ResetPlot()
         {
             grphErr.Plot.Clear();
             grphErr.Plot.XLabel("Epoch");
             grphErr.Plot.YLabel("Error (loss)");
-            double[] yvalues = trainer.lossLogs.ToArray();
-            double bestloss = 100000000;
-            for (int i = 0; i < trainer.lossLogs.Count; i++)
-            {
-                if (trainer.lossLogs[i] < bestloss)
-                    bestloss = trainer.lossLogs[i];
-            }
-            double[] xvalues = new double[currEpox];
-            for (int i = 0; i < xvalues.Length; i++)
-            {
-                xvalues[i] = i + 1;
-            }
-            var legendloss = grphErr.Plot.Add.Scatter(xvalues, yvalues, color: ScottPlot.Color.FromColor(Color.Red));
-            legendloss.LegendText = "Best loss: " + bestloss.ToString("F4");
-            //            var legendaccuracy = grphErr.Plot.Add.Scatter(xvalues, accuracyLogs.ToArray(), color: ScottPlot.Color.FromColor(Color.Green));
+            plottedRuns.Clear();
+            colorIndex = 0;
+        }
+
+        // Adds one loss curve to the graph (overlaid on whatever is already there) with the next
+        // color from the palette and a legend entry.
+        private void AddCurve(double[] losses, string label)
+        {
+            double[] x = new double[losses.Length];
+            for (int i = 0; i < x.Length; i++) x[i] = i + 1;
+
+            Color c = palette[colorIndex % palette.Length];
+            colorIndex++;
+
+            var scatter = grphErr.Plot.Add.Scatter(x, losses, color: ScottPlot.Color.FromColor(c));
+            scatter.LegendText = label;
             grphErr.Plot.Axes.AutoScale();
-            grphErr.Plot.ShowLegend(ScottPlot.Alignment.UpperLeft, ScottPlot.Orientation.Horizontal);
+            grphErr.Plot.ShowLegend(ScottPlot.Alignment.UpperRight, ScottPlot.Orientation.Vertical);
             grphErr.Refresh();
+        }
+
+        private static string RunLabel(decimal epochs, decimal layers, decimal neurons, double[] losses)
+        {
+            double best = losses.Length > 0 ? losses.Min() : 0;
+            return string.Format("{0}ep / {1}L / {2}N  (best {3:F4})", epochs, layers, neurons, best);
         }
 
         private void enableControls(bool enabled)
@@ -198,49 +246,44 @@ namespace SimpleNN
             Application.DoEvents();
         }
 
+        // When the hyperparameters change, recall a previously saved run for those exact values
+        // (if one exists) and overlay its loss curve so it can be compared with the others.
         private void numbxEpox_ValueChanged(object sender, EventArgs e)
         {
-            string fileName = string.Format("run_{0}_{1}_{2}.json", numbxEpox.Value, numbxLayers.Value, numbxNeurons.Value);
-            fileName = Path.Combine(Properties.Settings.Default.ResultsFolder, fileName);
-            OldGraph(fileName);
+            OldGraph(RunFileName());
         }
 
-        private void OldGraph(string fileName, bool clearplot = true)
+        // Loads a saved run and overlays it on the graph. Skips runs already shown so curves
+        // accumulate for comparison without duplicates. A new training Run clears them (ResetPlot).
+        private void OldGraph(string fileName)
         {
-            if (File.Exists(fileName))
+            if (!File.Exists(fileName)) return;
+
+            string key = Path.GetFileName(fileName);
+            if (plottedRuns.Contains(key)) return;
+
+            // If this is the first curve (no Run yet this session), make sure the axes are labelled.
+            if (plottedRuns.Count == 0)
+            {
+                grphErr.Plot.XLabel("Epoch");
+                grphErr.Plot.YLabel("Error (loss)");
+            }
+
+            try
             {
                 string json = File.ReadAllText(fileName);
-                // Deserializza json in una variabile dinamica
                 dynamic deserializedData = JsonConvert.DeserializeObject<dynamic>(json);
+                if (deserializedData == null) return;
 
-                // Esempio: loggare i dati deserializzati
-                if (deserializedData != null)
-                {
-                    if (clearplot)
-                    {
-                        grphErr.Plot.Clear();
-                    }
-                    grphErr.Plot.XLabel("Numero epoche");
-                    grphErr.Plot.YLabel("Errore");
-                    double[] yvalues = deserializedData.lossLogs.ToObject<double[]>();
-                    double bestloss = 100000000;
-                    for (int i = 0; i < yvalues.Length; i++)
-                    {
-                        if (yvalues[i] < bestloss)
-                            bestloss = yvalues[i];
-                    }
-                    double[] xvalues = new double[Convert.ToInt32(numbxEpox.Value)];
-                    for (int i = 0; i < xvalues.Length; i++)
-                    {
-                        xvalues[i] = i + 1;
-                    }
-                    FileInfo fi = new FileInfo(fileName);
-                    var legendloss = grphErr.Plot.Add.Scatter(xvalues, yvalues, color: ScottPlot.Color.FromColor(Color.Green));
-                    legendloss.LegendText = "Filename: " + fi.Name + " Best loss: " + bestloss;
-                    grphErr.Plot.Axes.AutoScale();
-                    grphErr.Plot.ShowLegend(ScottPlot.Alignment.UpperLeft, ScottPlot.Orientation.Horizontal);
-                    grphErr.Refresh();
-                }
+                double[]? losses = deserializedData.lossLogs.ToObject<double[]>();
+                if (losses == null || losses.Length == 0) return;
+                double best = losses.Min();
+                plottedRuns.Add(key);
+                AddCurve(losses, string.Format("{0}  (best {1:F4})", key, best));
+            }
+            catch
+            {
+                // Ignore malformed or incompatible (old-format) run files.
             }
         }
 
