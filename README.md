@@ -48,7 +48,7 @@ Sample CSVs are included in [`Data/`](Data).
 **Requirements:** Windows + [.NET 8 SDK](https://dotnet.microsoft.com/download).
 
 ```bash
-git clone https://github.com/<your-username>/SimpleNN.git
+git clone https://github.com/SlicelessBread/SimpleNN.git
 cd SimpleNN
 dotnet run --project SimpleNN.csproj
 ```
