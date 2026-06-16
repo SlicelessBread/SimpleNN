@@ -1,0 +1,18 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="SimpleNN.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="TrainingFile" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">C:\AI\SimpleNN\SimpleNN\Data\housingTraining.csv</Value>
+    </Setting>
+    <Setting Name="TestFile" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">C:\AI\SimpleNN\SimpleNN\Data\housingTest.csv</Value>
+    </Setting>
+    <Setting Name="ResultsFolder" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">C:\AI\SimpleNN\SimpleNN\Results\</Value>
+    </Setting>
+    <Setting Name="SingleTestFile" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">C:\AI\SimpleNN\SimpleNN\Data\housingTestSingle.csv</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>
