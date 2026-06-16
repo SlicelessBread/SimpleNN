@@ -64,7 +64,7 @@
             lblTraningFile.Name = "lblTraningFile";
             lblTraningFile.Size = new Size(562, 28);
             lblTraningFile.TabIndex = 0;
-            lblTraningFile.Text = "File di Training";
+            lblTraningFile.Text = "Training file";
             //
             // lblTestFile
             //
@@ -73,7 +73,7 @@
             lblTestFile.Name = "lblTestFile";
             lblTestFile.Size = new Size(562, 28);
             lblTestFile.TabIndex = 1;
-            lblTestFile.Text = "File di Test";
+            lblTestFile.Text = "Test file";
             //
             // lblTrainCaption
             //
@@ -149,7 +149,7 @@
             lblEpox.Name = "lblEpox";
             lblEpox.Size = new Size(51, 25);
             lblEpox.TabIndex = 6;
-            lblEpox.Text = "Epox";
+            lblEpox.Text = "Epochs";
             //
             // lblLayers
             //
@@ -245,7 +245,7 @@
             btnBrowseTrain.Name = "btnBrowseTrain";
             btnBrowseTrain.Size = new Size(150, 34);
             btnBrowseTrain.TabIndex = 16;
-            btnBrowseTrain.Text = "Sfoglia...";
+            btnBrowseTrain.Text = "Browse...";
             btnBrowseTrain.UseVisualStyleBackColor = true;
             btnBrowseTrain.Click += btnBrowseTrain_Click;
             //
@@ -255,7 +255,7 @@
             btnBrowseTest.Name = "btnBrowseTest";
             btnBrowseTest.Size = new Size(150, 34);
             btnBrowseTest.TabIndex = 17;
-            btnBrowseTest.Text = "Sfoglia...";
+            btnBrowseTest.Text = "Browse...";
             btnBrowseTest.UseVisualStyleBackColor = true;
             btnBrowseTest.Click += btnBrowseTest_Click;
             //
@@ -266,7 +266,7 @@
             lblSingleFile.Name = "lblSingleFile";
             lblSingleFile.Size = new Size(562, 28);
             lblSingleFile.TabIndex = 18;
-            lblSingleFile.Text = "File Single";
+            lblSingleFile.Text = "Single file";
             //
             // btnBrowseSingle
             //
@@ -274,7 +274,7 @@
             btnBrowseSingle.Name = "btnBrowseSingle";
             btnBrowseSingle.Size = new Size(150, 34);
             btnBrowseSingle.TabIndex = 19;
-            btnBrowseSingle.Text = "Sfoglia...";
+            btnBrowseSingle.Text = "Browse...";
             btnBrowseSingle.UseVisualStyleBackColor = true;
             btnBrowseSingle.Click += btnBrowseSingle_Click;
             //
@@ -308,7 +308,7 @@
             Controls.Add(lblTraningFile);
             Margin = new Padding(4, 5, 4, 5);
             Name = "Form1";
-            Text = "Form1";
+            Text = "SimpleNN - Neural Network Trainer";
             Load += Form1_Load;
             ((System.ComponentModel.ISupportInitialize)numbxEpox).EndInit();
             ((System.ComponentModel.ISupportInitialize)numbxLayers).EndInit();

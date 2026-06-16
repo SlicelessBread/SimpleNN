@@ -8,6 +8,11 @@ dataset — a classic regression problem (predicting median house value).
 The network — layers, neurons, forward pass and backpropagation — is implemented by hand to
 demonstrate how training actually works under the hood.
 
+![SimpleNN training on the California Housing dataset](assets/screenshot-main.png)
+
+*The loss curve converges over 50 epochs of training; the log (right) shows the records
+loaded, the training time, the test RMSE in dollars, and a single prediction vs. the actual value.*
+
 ## Features
 
 - **Neural network from scratch**: dense layers, configurable activations

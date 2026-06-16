@@ -32,10 +32,10 @@ namespace SimpleNN
             lblTestFile.Text = testFilePath;
             lblSingleFile.Text = singleFilePath;
 
-            // Spiegazione di ciascun file al passaggio del mouse.
-            string trainTip = "Dati di ADDESTRAMENTO: CSV con molti record (feature + median_house_value). Usato dal pulsante Run per addestrare la rete.";
-            string testTip = "Dati di TEST: CSV separato, mai visto in addestramento. Usato dal pulsante Test per misurare l'errore reale (RMSE in $).";
-            string singleTip = "Record SINGOLO: CSV con una sola riga. Usato dal pulsante Single per predire quel valore e confrontarlo con quello reale.";
+            // Explanation of each file shown on mouse hover.
+            string trainTip = "TRAINING data: a CSV with many records (features + median_house_value). Used by the Run button to train the network.";
+            string testTip = "TEST data: a separate CSV, never seen during training. Used by the Test button to measure the real error (RMSE in $).";
+            string singleTip = "SINGLE record: a CSV with a single row. Used by the Single button to predict that value and compare it to the real one.";
 
             toolTip.SetToolTip(lblTrainCaption, trainTip);
             toolTip.SetToolTip(lblTraningFile, trainTip);
@@ -58,7 +58,7 @@ namespace SimpleNN
         {
             using OpenFileDialog dlg = new OpenFileDialog
             {
-                Filter = "File CSV (*.csv)|*.csv|Tutti i file (*.*)|*.*",
+                Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*",
                 CheckFileExists = true
             };
             if (!string.IsNullOrEmpty(current) && File.Exists(current))
@@ -109,7 +109,7 @@ namespace SimpleNN
                 // 1) TRAIN: carica + normalizza (calcola le statistiche sul training).
                 LoadData train = new LoadData(trainFilePath, "median_house_value");
                 train.FitNormalization();
-                lstLog.Items.Insert(0, string.Format("Trovati {0} record in {1:F2}s",
+                lstLog.Items.Insert(0, string.Format("Loaded {0} records in {1:F2}s",
                     train.data.Count, DateTime.Now.Subtract(start).TotalSeconds));
 
                 // 2) Rete: hidden layer ReLU secondo la UI, 1 output lineare (impostato dentro Network).
@@ -121,7 +121,7 @@ namespace SimpleNN
                 TrainingData = train;
                 start = DateTime.Now;
                 trainer.Fit(train.data, train.labels);
-                lstLog.Items.Insert(0, string.Format("Training: {0} epoche in {1:F2}s",
+                lstLog.Items.Insert(0, string.Format("Training: {0} epochs in {1:F2}s",
                     trainer.epoche, DateTime.Now.Subtract(start).TotalSeconds));
 
                 // 4) Mostra la curva della loss. Per valutare sul test set premere "Test".
@@ -152,17 +152,16 @@ namespace SimpleNN
             }
             catch (Exception e)
             {
-                lstLog.Items.Add("Errore in fase salvataggio su disco: " + e.Message);
+                lstLog.Items.Add("Error while saving to disk: " + e.Message);
             }
         }
 
         private void updateplot(int currEpox)
         {
             grphErr.Plot.Clear();
-            grphErr.Plot.XLabel("Numero epoche");
-            grphErr.Plot.YLabel("Errore");
-            double[] yvalues = new double[trainer.lossLogs.Count];
-            yvalues = trainer.lossLogs.ToArray();
+            grphErr.Plot.XLabel("Epoch");
+            grphErr.Plot.YLabel("Error (loss)");
+            double[] yvalues = trainer.lossLogs.ToArray();
             double bestloss = 100000000;
             for (int i = 0; i < trainer.lossLogs.Count; i++)
             {
@@ -175,7 +174,7 @@ namespace SimpleNN
                 xvalues[i] = i + 1;
             }
             var legendloss = grphErr.Plot.Add.Scatter(xvalues, yvalues, color: ScottPlot.Color.FromColor(Color.Red));
-            legendloss.LegendText = "Best loss: " + bestloss;
+            legendloss.LegendText = "Best loss: " + bestloss.ToString("F4");
             //            var legendaccuracy = grphErr.Plot.Add.Scatter(xvalues, accuracyLogs.ToArray(), color: ScottPlot.Color.FromColor(Color.Green));
             grphErr.Plot.Axes.AutoScale();
             grphErr.Plot.ShowLegend(ScottPlot.Alignment.UpperLeft, ScottPlot.Orientation.Horizontal);
@@ -250,7 +249,7 @@ namespace SimpleNN
             DateTime start = DateTime.Now;
             if (trainer == null || TrainingData == null)
             {
-                lstLog.Items.Insert(0, "Nessun modello da testare");
+                lstLog.Items.Insert(0, "No trained model to test. Click Run first.");
                 return;
             }
             // Normalizza le feature con le STATISTICHE DEL TRAIN, poi RMSE in dollari.
@@ -275,13 +274,13 @@ namespace SimpleNN
             LoadData single = new LoadData(singleFilePath, "median_house_value");
             if (single.data.Count == 0)
             {
-                lstLog.Items.Insert(0, "Nessun record nel file single");
+                lstLog.Items.Insert(0, "No record found in the single file");
                 return;
             }
             single.NormalizeFeaturesWith(TrainingData.FeatureMean, TrainingData.FeatureStd);
             double predScaled = trainer.network.Prediction(new List<double>(single.data[0]))[0];
             double prevision = predScaled * TrainingData.LabelStd + TrainingData.LabelMean;
-            lstLog.Items.Insert(0, string.Format("Previsione: {0}, label: {1}",
+            lstLog.Items.Insert(0, string.Format("Prediction: ${0:N0}, actual: ${1:N0}",
                 (int)prevision, (int)single.labels[0]));
         }
     }
